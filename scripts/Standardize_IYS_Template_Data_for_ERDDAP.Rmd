@@ -1,0 +1,43 @@
+---
+title: "Standardize IYS Template Data for ERDDAP"
+author: "Brett Johnson"
+date: '2022-05-26'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+knitr::opts_chunk$set(echo = TRUE)
+
+event <- read_excel("IYS_data_template/IYS2022_TINRO_CTD.xlsx", 
+    sheet = "4. SAMPLING EVENT INFO") %>% 
+  filter(Event_Type == "CTD") %>% 
+  mutate(Time_Start = str_sub(Time_Start, -8, -1),
+         Time_End = str_sub(Time_End, -8, -1),
+        # convert numeric fractional of day to minutes
+         Sampling_Duration_Minutes = round(Sampling_Duration_Minutes * 1440, 0)) %>% 
+  select(-Day_Night, -Tow_speed_kilometers_per_hour, -Tow_distance_nautical_miles, -Swell_height_Meters, -Weather_description, -Comments) 
+  
+
+ctd <- read_excel("IYS_data_template/IYS2022_TINRO_CTD.xlsx", 
+    sheet = "7. CTD INFO") %>% 
+  # Remove un-used columns
+  select(-c(sea_water_conductivity, sea_water_EC25, sea_water_turbidity,
+         sea_water_chl_fluorescence, sea_water_chl_concentration,
+         sea_water_dissolvedO2, sea_water_dissolvedO2_sat,
+         sea_water_pH, sea_water_BOD5, Comments)) %>% 
+  # Convert Dbar depth unit to meters
+  mutate(depth_meters = 0.1 * Sampling_Depth_Dbar,
+         #Remove "main" from station event ID column to join with event table
+         Station_Event_ID = str_sub(Station_Event_ID, 1, -6))
+
+tinro_ctd_2022 <- right_join(event, ctd)
+
+write_csv(tinro_ctd_2022, here::here("standardized_data", "tinro_ctd_2022.csv"))
+```
+
+```{r}
+
+```
+
