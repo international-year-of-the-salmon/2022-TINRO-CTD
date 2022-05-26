@@ -27,3 +27,7 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 2022-TINRO-CTD.Rproj
+
+original_data/.DS_Store
+
+.DS_Store
