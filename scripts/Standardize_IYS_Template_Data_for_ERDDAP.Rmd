@@ -8,17 +8,20 @@ output: html_document
 ```{r setup, include=FALSE}
 library(tidyverse)
 library(lubridate)
+library(readxl)
 knitr::opts_chunk$set(echo = TRUE)
 
 event <- read_excel("IYS_data_template/IYS2022_TINRO_CTD.xlsx", 
     sheet = "4. SAMPLING EVENT INFO") %>% 
   filter(Event_Type == "CTD") %>% 
-  mutate(Time_Start = str_sub(Time_Start, -8, -1),
+  mutate(Time_Start = str_sub(Time_Start, -8, -1), # Remove leading date
          Time_End = str_sub(Time_End, -8, -1),
+         Date_Time = paste0(format_ISO8601(as.POSIXct(paste0(as_date(
+           paste0(Year, "-", Month, "-", Day)), " ", Time_Start), tz="UTC")), "Z"),
         # convert numeric fractional of day to minutes
-         Sampling_Duration_Minutes = round(Sampling_Duration_Minutes * 1440, 0)) %>% 
+         Sampling_Duration_Minutes = round(Sampling_Duration_Minutes * 1440, 0)) %>%
   select(-Day_Night, -Tow_speed_kilometers_per_hour, -Tow_distance_nautical_miles, -Swell_height_Meters, -Weather_description, -Comments) 
-  
+
 
 ctd <- read_excel("IYS_data_template/IYS2022_TINRO_CTD.xlsx", 
     sheet = "7. CTD INFO") %>% 
@@ -38,6 +41,25 @@ write_csv(tinro_ctd_2022, here::here("standardized_data", "tinro_ctd_2022.csv"))
 ```
 
 ```{r}
+polygon_coords <- function(df) {
+  df <- df %>% tidyr::drop_na(lat, lon) %>% 
+    dplyr::mutate(lon = dplyr::if_else(lon < 0, 360 + lon, lon))
+  ch <- chull(df)
+  coords <- df[c(ch, ch[1]), ]
+  coords <- paste(coords$lat, coords$lon, sep = ",", collapse = " ")
+  coords
+}
 
+event_coords <- read_excel("IYS_data_template/IYS2022_TINRO_CTD.xlsx", 
+    sheet = "4. SAMPLING EVENT INFO")
+
+df <- event_coords %>% 
+  select(lat = Latitude_Start_DecDeg, lon = Longitude_Start_DecDeg) %>% 
+  filter(lat != 0 | lon != 0)
+
+#copy output from console into metadata intake form polygon coordinates  
+polygon_coords(df)
+
+max(tinro_ctd_2022$depth_meters)
 ```
 
