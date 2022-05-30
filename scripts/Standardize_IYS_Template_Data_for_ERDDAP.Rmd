@@ -30,9 +30,7 @@ ctd <- read_excel("IYS_data_template/IYS2022_TINRO_CTD.xlsx",
          sea_water_chl_fluorescence, sea_water_chl_concentration,
          sea_water_dissolvedO2, sea_water_dissolvedO2_sat,
          sea_water_pH, sea_water_BOD5, Comments)) %>% 
-  # Convert Dbar depth unit to meters
-  mutate(depth_meters = 0.1 * Sampling_Depth_Dbar,
-         #Remove "main" from station event ID column to join with event table
+  mutate(#Remove "main" from station event ID column to join with event table
          Station_Event_ID = str_sub(Station_Event_ID, 1, -6))
 
 tinro_ctd_2022 <- right_join(event, ctd)
