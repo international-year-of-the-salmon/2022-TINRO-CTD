@@ -1,0 +1,8 @@
+# Changelog
+All notable changes to this project will be documented in this file.
+
+## [V1] - Unreleased
+
+# Added
+
+- Computed sampling depth based on pressure and latitude using the Gibbs Sea Water Functions method.
